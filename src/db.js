@@ -2,39 +2,854 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('GradinaPWA');
 
-db.version(4).stores({
+// Versiunea 5 cu index compus [parcelId+year] pentru rotație rapidă
+db.version(5).stores({
   gardens: 'id, name',
   parcels: 'id, gardenId, name',
   plants: 'id, name, family',
-  plantings: '++id, parcelId, year, plantId',
+  plantings: '++id, parcelId, year, plantId, [parcelId+year]',
   settings: 'key'
 });
 
 export const defaultPlants = [
-  { id: '1', name: 'Roșii', family: 'Solanaceae', spacing: '40-50 cm', sun: 'Soare plin', water: 'Moderat', companions: 'Busuioc, Morcovi, Ceapă, Pătrunjel', avoid: 'Cartofi, Fenicul' },
-  { id: '2', name: 'Ardei', family: 'Solanaceae', spacing: '30-40 cm', sun: 'Soare plin', water: 'Moderat', companions: 'Busuioc, Ceapă, Spanac', avoid: 'Mazăre, Fasole' },
-  { id: '3', name: 'Mazăre', family: 'Fabaceae', spacing: '5-10 cm', sun: 'Soare / Parțial', water: 'Moderat', companions: 'Morcovi, Castraveți, Porumb', avoid: 'Ceapă, Usturoi' },
-  { id: '4', name: 'Morcovi', family: 'Apiaceae', spacing: '5 cm', sun: 'Soare plin', water: 'Moderat', companions: 'Mazăre, Praz, Ceapă, Roșii', avoid: 'Mărar, Păstârnac' },
-  { id: '5', name: 'Ceapă', family: 'Amaryllidaceae', spacing: '10 cm', sun: 'Soare plin', water: 'Rar', companions: 'Morcovi, Roșii, Căpșuni', avoid: 'Mazăre, Fasole' },
-  { id: '6', name: 'Busuioc', family: 'Lamiaceae', spacing: '20 cm', sun: 'Soare plin', water: 'Moderat', companions: 'Roșii, Ardei', avoid: 'Cimbru' },
-  { id: '7', name: 'Castraveți', family: 'Cucurbitaceae', spacing: '30-40 cm', sun: 'Soare plin', water: 'Abundent', companions: 'Mazăre, Fasole, Floarea soarelui', avoid: 'Cartofi, Aromatice tari' },
-  { id: '8', name: 'Usturoi', family: 'Amaryllidaceae', spacing: '10-15 cm', sun: 'Soare plin', water: 'Rar', companions: 'Roșii, Morcovi, Căpșuni', avoid: 'Mazăre, Fasole' },
+  // --- Legume & Fructe de pământ principale (1-42) ---
+  {
+    id: '1',
+    name: 'Tomate',
+    family: 'Solanaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Busuioc, Morcov, Ceapă, Pătrunjel, Craițe, Galbenele',
+    avoid: 'Nuc, Cartof, Fenicul, Varză'
+  },
+  {
+    id: '2',
+    name: 'Ardei (Gras/Kapia/Iute)',
+    family: 'Solanaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Busuioc, Ceapă, Spanac, Morcov, Oregano',
+    avoid: 'Fasole urcătoare, Fenicul, Varză'
+  },
+  {
+    id: '3',
+    name: 'Vinete',
+    family: 'Solanaceae',
+    spacing: '45-50 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Fasole, Busuioc, Spanac, Mazăre, Cimbru',
+    avoid: 'Cartof, Tomate'
+  },
+  {
+    id: '4',
+    name: 'Cartof',
+    family: 'Solanaceae',
+    spacing: '30-35 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Fasole, Varză, Porumb, Craițe, Hrean',
+    avoid: 'Tomate, Castravete, Dovlecel, Floarea-soarelui'
+  },
+  {
+    id: '5',
+    name: 'Castravete',
+    family: 'Cucurbitaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Mazăre, Fasole, Ridichi, Porumb, Mărar, Floarea-soarelui',
+    avoid: 'Cartof, Plante aromatice lemnoase'
+  },
+  {
+    id: '6',
+    name: 'Dovlecel',
+    family: 'Cucurbitaceae',
+    spacing: '60-80 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Porumb, Fasole, Mentă, Craițe, Ridichi',
+    avoid: 'Cartof'
+  },
+  {
+    id: '7',
+    name: 'Dovleac',
+    family: 'Cucurbitaceae',
+    spacing: '100-150 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Porumb, Fasole, Floarea-soarelui, Craițe',
+    avoid: 'Cartof'
+  },
+  {
+    id: '8',
+    name: 'Pepene roșu',
+    family: 'Cucurbitaceae',
+    spacing: '80-100 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Porumb, Ridichi, Oregano, Craițe',
+    avoid: 'Cartof, Dovlecel'
+  },
+  {
+    id: '9',
+    name: 'Pepene galben',
+    family: 'Cucurbitaceae',
+    spacing: '80-100 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Porumb, Ridichi, Craițe, Busuioc',
+    avoid: 'Cartof, Castraveți'
+  },
+  {
+    id: '10',
+    name: 'Morcov',
+    family: 'Apiaceae',
+    spacing: '5-10 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Praz, Ceapă, Tomate, Salată, Mazăre, Rozmarin',
+    avoid: 'Mărar, Păstârnac, Fenicul'
+  },
+  {
+    id: '11',
+    name: 'Pătrunjel',
+    family: 'Apiaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Tomate, Ceapă, Galbenele, Sparanghel',
+    avoid: 'Mărar, Țelină'
+  },
+  {
+    id: '12',
+    name: 'Păstârnac',
+    family: 'Apiaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Ceapă, Usturoi, Salată, Ridichi',
+    avoid: 'Morcov, Mărar, Țelină'
+  },
+  {
+    id: '13',
+    name: 'Țelină',
+    family: 'Apiaceae',
+    spacing: '25-30 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Abundent',
+    companions: 'Tomate, Varză, Praz, Fasole, Spanac',
+    avoid: 'Morcov, Păstârnac'
+  },
+  {
+    id: '14',
+    name: 'Mărar',
+    family: 'Apiaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Varză, Castraveți, Ceapă, Salată',
+    avoid: 'Morcov, Tomate, Fenicul'
+  },
+  {
+    id: '15',
+    name: 'Leuștean',
+    family: 'Apiaceae',
+    spacing: '50-60 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Salată, Fasole, Varză',
+    avoid: 'Nu are antagoniști direcți (plantează separat din cauza dimensiunii)'
+  },
+  {
+    id: '16',
+    name: 'Ceapă',
+    family: 'Amaryllidaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Morcov, Sfeclă, Tomate, Salată, Căpșuni',
+    avoid: 'Mazăre, Fasole, Sparanghel'
+  },
+  {
+    id: '17',
+    name: 'Usturoi',
+    family: 'Amaryllidaceae',
+    spacing: '10-12 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Tomate, Vinete, Morcov, Sfeclă, Căpșuni, Trandafiri',
+    avoid: 'Mazăre, Fasole, Sparanghel'
+  },
+  {
+    id: '18',
+    name: 'Praz',
+    family: 'Amaryllidaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Morcov, Sfeclă, Țelină, Salată, Căpșuni',
+    avoid: 'Mazăre, Fasole'
+  },
+  {
+    id: '19',
+    name: 'Mazăre',
+    family: 'Fabaceae',
+    spacing: '5-8 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Morcov, Ridichi, Castraveți, Porumb, Varză',
+    avoid: 'Ceapă, Usturoi, Praz'
+  },
+  {
+    id: '20',
+    name: 'Fasole',
+    family: 'Fabaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Porumb, Castraveți, Cartof, Morcov, Sfeclă, Cimbru',
+    avoid: 'Ceapă, Usturoi, Praz, Fenicul'
+  },
+  {
+    id: '21',
+    name: 'Bob',
+    family: 'Fabaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Cartof, Varză, Porumb, Morcov',
+    avoid: 'Ceapă, Usturoi'
+  },
+  {
+    id: '22',
+    name: 'Varză',
+    family: 'Brassicaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Țelină, Mărar, Cimbru, Mentă, Salată, Cartof',
+    avoid: 'Tomate, Ardei, Căpșuni, Fasole urcătoare'
+  },
+  {
+    id: '23',
+    name: 'Conopidă',
+    family: 'Brassicaceae',
+    spacing: '45-50 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Țelină, Oregano, Cimbru, Spanac',
+    avoid: 'Tomate, Căpșuni, Mazăre'
+  },
+  {
+    id: '24',
+    name: 'Broccoli',
+    family: 'Brassicaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Țelină, Mărar, Rozmarin, Mentă, Salată',
+    avoid: 'Tomate, Căpșuni, Oregano'
+  },
+  {
+    id: '25',
+    name: 'Ridichi',
+    family: 'Brassicaceae',
+    spacing: '5-7 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Morcov, Castraveți, Salată, Spanac, Mazăre',
+    avoid: 'Hrean, Varză'
+  },
+  {
+    id: '26',
+    name: 'Gulie',
+    family: 'Brassicaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Sfeclă, Castraveți, Salată, Cimbru, Mărar',
+    avoid: 'Tomate, Ardei, Căpșuni'
+  },
+  {
+    id: '27',
+    name: 'Rucola',
+    family: 'Brassicaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Morcov, Salată, Sfeclă, Mărar',
+    avoid: 'Busuioc'
+  },
+  {
+    id: '28',
+    name: 'Hrean',
+    family: 'Brassicaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Cartof, Varză, Pom fructifer',
+    avoid: 'Ridichi'
+  },
+  {
+    id: '29',
+    name: 'Salată verde',
+    family: 'Asteraceae',
+    spacing: '20-25 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Morcov, Ridichi, Căpșuni, Ceapă, Castraveți',
+    avoid: 'Țelină, Păstârnac'
+  },
+  {
+    id: '30',
+    name: 'Floarea-soarelui',
+    family: 'Asteraceae',
+    spacing: '30-40 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Porumb, Castraveți',
+    avoid: 'Cartof, Tomate'
+  },
+  {
+    id: '31',
+    name: 'Spanac',
+    family: 'Amaranthaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Căpșuni, Vinete, Fasole, Mazăre, Varză',
+    avoid: 'Nu are necompatibilități majore'
+  },
+  {
+    id: '32',
+    name: 'Sfeclă roșie',
+    family: 'Amaranthaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Ceapă, Usturoi, Salată, Varză, Praz',
+    avoid: 'Fasole urcătoare, Mustar'
+  },
+  {
+    id: '33',
+    name: 'Lobodă',
+    family: 'Amaranthaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Salată, Ridichi, Varză',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '34',
+    name: 'Căpșuni',
+    family: 'Rosaceae',
+    spacing: '25-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Usturoi, Ceapă, Spanac, Salată, Cimbru',
+    avoid: 'Varză, Conopidă, Broccoli, Cartof'
+  },
+  {
+    id: '35',
+    name: 'Busuioc',
+    family: 'Lamiaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Tomate, Ardei, Vinete, Oregano',
+    avoid: 'Rucola, Mărar'
+  },
+  {
+    id: '36',
+    name: 'Cimbru',
+    family: 'Lamiaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Varză, Vinete, Tomate, Fasole, Căpșuni',
+    avoid: 'Mărar'
+  },
+  {
+    id: '37',
+    name: 'Oregano (Șovârv)',
+    family: 'Lamiaceae',
+    spacing: '25-30 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Ardei, Vinete, Tomate, Dovlecel',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '38',
+    name: 'Mentă',
+    family: 'Lamiaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Varză, Tomate',
+    avoid: 'Pătrunjel'
+  },
+  {
+    id: '39',
+    name: 'Rozmarin',
+    family: 'Lamiaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Morcov, Varză, Fasole, Salvie',
+    avoid: 'Castraveți, Cartof'
+  },
+  {
+    id: '40',
+    name: 'Salvie',
+    family: 'Lamiaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Varză, Morcov, Rozmarin',
+    avoid: 'Castraveți, Ceapă'
+  },
+  {
+    id: '41',
+    name: 'Porumb dulce',
+    family: 'Poaceae',
+    spacing: '25-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Fasole, Dovleac, Dovlecel, Mazăre, Castraveți, Floarea-soarelui',
+    avoid: 'Tomate'
+  },
+  {
+    id: '42',
+    name: 'Ștevie',
+    family: 'Polygonaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Praz, Ceapă',
+    avoid: 'Mazăre'
+  },
+
+  // --- Plante speciale, condimente și culturi secundare (43-82) ---
+  {
+    id: '43',
+    name: 'Batat (Cartof dulce)',
+    family: 'Convolvulaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Cimbru, Mărar, Varză',
+    avoid: 'Dovlecel'
+  },
+  {
+    id: '44',
+    name: 'Sparanghel',
+    family: 'Asparagaceae',
+    spacing: '45-50 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Tomate, Pătrunjel, Busuioc, Salată',
+    avoid: 'Ceapă, Usturoi, Praz'
+  },
+  {
+    id: '45',
+    name: 'Mangold (Sfeclă de frunze)',
+    family: 'Amaranthaceae',
+    spacing: '20-30 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Ceapă, Fasole, Ridichi, Morcov',
+    avoid: 'Spanac'
+  },
+  {
+    id: '46',
+    name: 'Topinambur',
+    family: 'Asteraceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Porumb, Floarea-soarelui',
+    avoid: 'Cartof'
+  },
+  {
+    id: '47',
+    name: 'Fenicul',
+    family: 'Apiaceae',
+    spacing: '20-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Salată, Mentă',
+    avoid: 'Tomate, Morcov, Fasole, Ardei, Coriandru'
+  },
+  {
+    id: '48',
+    name: 'Coriandru',
+    family: 'Apiaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Spanac, Chimen, Praz, Anason',
+    avoid: 'Fenicul'
+  },
+  {
+    id: '49',
+    name: 'Chimen',
+    family: 'Apiaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Mazăre, Praz, Varză',
+    avoid: 'Fenicul'
+  },
+  {
+    id: '50',
+    name: 'Anason',
+    family: 'Apiaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Coriandru, Varză',
+    avoid: 'Morcov'
+  },
+  {
+    id: '51',
+    name: 'Tarhon',
+    family: 'Asteraceae',
+    spacing: '30-40 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Vinete, Tomate, Salată',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '52',
+    name: 'Măghiran',
+    family: 'Lamiaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Ceapă, Varză, Morcov',
+    avoid: 'Fenicul'
+  },
+  {
+    id: '53',
+    name: 'Isop',
+    family: 'Lamiaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Varză, Viță de vie',
+    avoid: 'Ridichi'
+  },
+  {
+    id: '54',
+    name: 'Lavandă',
+    family: 'Lamiaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Cimbru, Oregano, Rozmarin, Trandafiri',
+    avoid: 'Plante iubitoare de umiditate excesivă'
+  },
+  {
+    id: '55',
+    name: 'Roiniță (Melisă)',
+    family: 'Lamiaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Tomate, Varză',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '56',
+    name: 'Limba mielului (Borago)',
+    family: 'Boraginaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Tomate, Dovlecel, Căpșuni',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '57',
+    name: 'Schinduf',
+    family: 'Fabaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Morcov, Castraveți',
+    avoid: 'Ceapă, Usturoi'
+  },
+  {
+    id: '58',
+    name: 'Năut',
+    family: 'Fabaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Porumb, Cartof, Morcov',
+    avoid: 'Ceapă, Usturoi'
+  },
+  {
+    id: '59',
+    name: 'Linte',
+    family: 'Fabaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Morcov, Castraveți',
+    avoid: 'Ceapă, Usturoi'
+  },
+  {
+    id: '60',
+    name: 'Soia',
+    family: 'Fabaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Porumb, Dovleac',
+    avoid: 'Ceapă'
+  },
+  {
+    id: '61',
+    name: 'Bamă (Bami)',
+    family: 'Malvaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Ardei, Vinete, Porumb',
+    avoid: 'Cartof'
+  },
+  {
+    id: '62',
+    name: 'Physalis (Tomatillo)',
+    family: 'Solanaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Busuioc, Praz, Morcov',
+    avoid: 'Cartof, Fenicul'
+  },
+  {
+    id: '63',
+    name: 'Varză de Bruxelles',
+    family: 'Brassicaceae',
+    spacing: '50-60 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Țelină, Mărar, Salată',
+    avoid: 'Tomate, Căpșuni'
+  },
+  {
+    id: '64',
+    name: 'Varză Kale',
+    family: 'Brassicaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Sfeclă, Cimbru, Mărar',
+    avoid: 'Tomate, Fasole urcătoare'
+  },
+  {
+    id: '65',
+    name: 'Varză Chinezească (Bok Choy)',
+    family: 'Brassicaceae',
+    spacing: '25-30 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Mentă, Ridichi, Salată',
+    avoid: 'Tomate'
+  },
+  {
+    id: '66',
+    name: 'Nap (Sfeclă albă)',
+    family: 'Brassicaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Mazăre, Mentă',
+    avoid: 'Muștar'
+  },
+  {
+    id: '67',
+    name: 'Ridiche neagră (de iarnă)',
+    family: 'Brassicaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Morcov, Spanac, Salată',
+    avoid: 'Hrean'
+  },
+  {
+    id: '68',
+    name: 'Creson de grădină',
+    family: 'Brassicaceae',
+    spacing: '5-10 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Salată, Morcov',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '69',
+    name: 'Fetică (Salată de câmp)',
+    family: 'Caprifoliaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Ridichi, Ceapă, Căpșuni',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '70',
+    name: 'Măcriș',
+    family: 'Polygonaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Ceapă, Căpșuni, Praz',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '71',
+    name: 'Anghinare',
+    family: 'Asteraceae',
+    spacing: '80-100 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Floarea-soarelui, Salată',
+    avoid: 'Fenicul'
+  },
+  {
+    id: '72',
+    name: 'Endivie (Cicoare de salată)',
+    family: 'Asteraceae',
+    spacing: '25-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Morcov, Ridichi',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '73',
+    name: 'Untișor',
+    family: 'Ranunculaceae',
+    spacing: '10-15 cm',
+    sun: 'Umbră / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Pom fructifer, Salată',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '74',
+    name: 'Negrilică (Chimen negru)',
+    family: 'Ranunculaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Praz, Morcov',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '75',
+    name: 'Fragă',
+    family: 'Rosaceae',
+    spacing: '20-25 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Usturoi, Ceapă, Cimbru',
+    avoid: 'Varză'
+  },
+  {
+    id: '76',
+    name: 'Gălbenele',
+    family: 'Asteraceae',
+    spacing: '20-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Tomate, Castraveți, Morcov, Fasole',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '77',
+    name: 'Craițe (Tagetes)',
+    family: 'Asteraceae',
+    spacing: '20-25 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Tomate, Vinete, Cartof, Pepene',
+    avoid: 'Fasole'
+  },
+  {
+    id: '78',
+    name: 'Arpagic verde (Chives)',
+    family: 'Amaryllidaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Morcov, Tomate, Trandafiri',
+    avoid: 'Mazăre, Fasole'
+  },
+  {
+    id: '79',
+    name: 'Eșalotă',
+    family: 'Amaryllidaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Sfeclă, Morcov, Salată',
+    avoid: 'Mazăre, Fasole'
+  },
+  {
+    id: '80',
+    name: 'Stevia dulce (Stevia rebaudiana)',
+    family: 'Asteraceae',
+    spacing: '25-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Busuioc, Cimbru',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '81',
+    name: 'Păpădie de grădină',
+    family: 'Asteraceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Salată, Pomi fructiferi',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '82',
+    name: 'Mac de grădină',
+    family: 'Papaveraceae',
+    spacing: '20-25 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Salată, Morcov',
+    avoid: 'Nu are antagoniști direcți'
+  }
 ];
 
 db.on('populate', async () => {
   await db.plants.bulkAdd(defaultPlants);
 });
 
+// Sincronizează noile plante în IndexedDB la fiecare pornire/refresh
 export async function ensureDefaultPlants() {
-  const count = await db.plants.count();
-  if (count === 0) {
-    await db.plants.bulkAdd(defaultPlants);
-  }
+  await db.plants.bulkPut(defaultPlants);
 }
 
 export async function checkRotationRules(parcelId, plantId, year) {
   const previousPlanting = await db.plantings
-    .where({ parcelId, year: year - 1 })
+    .where('[parcelId+year]')
+    .equals([parcelId, year - 1])
     .first();
 
   if (!previousPlanting) {

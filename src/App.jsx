@@ -185,11 +185,13 @@ export default function App() {
     }
   };
 
+  // SCHIMBARE PLANTĂ + GENERARE AUTOMATĂ NUME PARCELĂ
   const handlePlantChange = async (e) => {
     const newPlantId = e.target.value;
     setSelectedPlantId(newPlantId);
 
     if (selectedParcel && newPlantId) {
+      // 1. Actualizare / Adăugare în baza de date
       const existing = plantings.find(p => p.parcelId === selectedParcel.id);
       if (existing) {
         await db.plantings.update(existing.id, { plantId: newPlantId });
@@ -197,6 +199,31 @@ export default function App() {
         await db.plantings.add({ parcelId: selectedParcel.id, year: selectedYear, plantId: newPlantId });
       }
 
+      // 2. Generare automată nume parcelă (ex: "Ceapă 1", "Ceapă 2")
+      const selectedPlant = plants.find(p => p.id === newPlantId);
+      if (selectedPlant) {
+        const plantName = selectedPlant.name;
+        const escapedName = plantName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`^${escapedName}\\s+(\\d+)$`, 'i');
+
+        let maxNum = 0;
+        parcels.forEach(p => {
+          const match = p.name.match(regex);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        });
+
+        const newParcelName = `${plantName} ${maxNum + 1}`;
+
+        // Salvare nume nou în Dexie + Stare
+        await db.parcels.update(selectedParcel.id, { name: newParcelName });
+        setSelectedParcel(prev => ({ ...prev, name: newParcelName }));
+        setParcelNameInput(newParcelName);
+      }
+
+      // 3. Verificare reguli rotație
       const res = await checkRotationRules(selectedParcel.id, newPlantId, selectedYear);
       setRotationMsg(res);
     }
@@ -222,6 +249,12 @@ export default function App() {
     if (selectedParcel) {
       setSelectedPlantId(plantId);
       await db.plantings.add({ parcelId: selectedParcel.id, year: selectedYear, plantId });
+
+      // Generare automată nume și pentru plante noi create
+      const newParcelName = `${newPlant.name.trim()} 1`;
+      await db.parcels.update(selectedParcel.id, { name: newParcelName });
+      setSelectedParcel(prev => ({ ...prev, name: newParcelName }));
+      setParcelNameInput(newParcelName);
     }
 
     setNewPlant({ name: '', family: 'Solanaceae', spacing: '30-40 cm', sun: 'Soare plin', water: 'Moderat', companions: '', avoid: '' });
