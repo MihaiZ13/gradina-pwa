@@ -10,7 +10,7 @@ function GeomanControls({ isLocked, onPolygonCreated }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || !map.pm) return;
 
     if (isLocked) {
       map.pm.addControls({
@@ -27,7 +27,7 @@ function GeomanControls({ isLocked, onPolygonCreated }) {
         removalMode: true,
       });
 
-      map.on('pm:create', (e) => {
+      const handleCreate = (e) => {
         const layer = e.layer;
         const rawLatLngs = layer.getLatLngs();
 
@@ -37,15 +37,17 @@ function GeomanControls({ isLocked, onPolygonCreated }) {
 
         onPolygonCreated(latLngs);
         map.removeLayer(layer);
-      });
+      };
+
+      map.on('pm:create', handleCreate);
+
+      return () => {
+        map.off('pm:create', handleCreate);
+        if (map.pm) map.pm.removeControls();
+      };
     } else {
       map.pm.removeControls();
     }
-
-    return () => {
-      map.pm.removeControls();
-      map.off('pm:create');
-    };
   }, [map, isLocked]);
 
   return null;
@@ -58,6 +60,7 @@ export default function App() {
   const [selectedParcel, setSelectedParcel] = useState(null);
   const [selectedPlantId, setSelectedPlantId] = useState('');
   const [rotationMsg, setRotationMsg] = useState(null);
+  const [neighborWarning, setNeighborWarning] = useState(null);
 
   // Stări pentru editare nume parcelă
   const [isEditingParcelName, setIsEditingParcelName] = useState(false);
@@ -97,10 +100,46 @@ export default function App() {
   // Planta selectată curent
   const currentPlantDetails = plants.find(p => p.id === selectedPlantId);
 
+  // Funcție pentru verificarea vecinilor din parcelele apropiate / din jur
+  const checkNeighborCompatibility = (currentParcel, newPlantData) => {
+    if (!parcels || parcels.length <= 1 || !newPlantData) {
+      setNeighborWarning(null);
+      return;
+    }
+
+    // Găsim alte parcele plantate în același an (excludem parcela curentă)
+    const otherPlantings = plantings.filter(p => p.parcelId !== currentParcel.id);
+    let conflicts = [];
+
+    otherPlantings.forEach(op => {
+      const pDetails = plants.find(pl => pl.id === op.plantId);
+      const otherParcel = parcels.find(par => par.id === op.parcelId);
+      if (pDetails && otherParcel) {
+        // Verificăm dacă noua plantă are în lista de 'avoid' planta vecină sau invers
+        const avoidList = (newPlantData.avoid || '').toLowerCase();
+        const otherName = pDetails.name.toLowerCase();
+        
+        const peerAvoidList = (pDetails.avoid || '').toLowerCase();
+        const currentName = newPlantData.name.toLowerCase();
+
+        if ((avoidList && avoidList.includes(otherName)) || (peerAvoidList && peerAvoidList.includes(currentName))) {
+          conflicts.push(`Atenție! ${newPlantData.name} nu este compatibilă cu ${pDetails.name} (aflată în ${otherParcel.name}).`);
+        }
+      }
+    });
+
+    if (conflicts.length > 0) {
+      setNeighborWarning({ status: 'warning', message: conflicts.join(' ') });
+    } else {
+      setNeighborWarning({ status: 'success', message: 'Vecinii din grădină par compatibili!' });
+    }
+  };
+
   // Salvare grădină activă
   const handleSelectGarden = async (id) => {
     await db.settings.put({ key: 'activeGardenId', value: id });
     setSelectedParcel(null);
+    setNeighborWarning(null);
   };
 
   const handleImageUpload = (e) => {
@@ -163,10 +202,15 @@ export default function App() {
     const plantId = existing ? existing.plantId : '';
     setSelectedPlantId(plantId);
     setRotationMsg(null);
+    setNeighborWarning(null);
 
     if (plantId) {
       const res = await checkRotationRules(parcel.id, plantId, selectedYear);
       setRotationMsg(res);
+      const selectedPlant = plants.find(p => p.id === plantId);
+      if (selectedPlant) {
+        checkNeighborCompatibility(parcel, selectedPlant);
+      }
     }
   };
 
@@ -182,10 +226,11 @@ export default function App() {
       await db.parcels.delete(parcelId);
       await db.plantings.where({ parcelId }).delete();
       setSelectedParcel(null);
+      setNeighborWarning(null);
     }
   };
 
-  // SCHIMBARE PLANTĂ + GENERARE AUTOMATĂ NUME PARCELĂ
+  // SCHIMBARE PLANTĂ + GENERARE AUTOMATĂ NUME PARCELĂ + VERIFICARE VECINI
   const handlePlantChange = async (e) => {
     const newPlantId = e.target.value;
     setSelectedPlantId(newPlantId);
@@ -199,7 +244,7 @@ export default function App() {
         await db.plantings.add({ parcelId: selectedParcel.id, year: selectedYear, plantId: newPlantId });
       }
 
-      // 2. Generare automată nume parcelă (ex: "Ceapă 1", "Ceapă 2")
+      // 2. Generare automată nume parcelă
       const selectedPlant = plants.find(p => p.id === newPlantId);
       if (selectedPlant) {
         const plantName = selectedPlant.name;
@@ -217,15 +262,19 @@ export default function App() {
 
         const newParcelName = `${plantName} ${maxNum + 1}`;
 
-        // Salvare nume nou în Dexie + Stare
         await db.parcels.update(selectedParcel.id, { name: newParcelName });
         setSelectedParcel(prev => ({ ...prev, name: newParcelName }));
         setParcelNameInput(newParcelName);
-      }
 
-      // 3. Verificare reguli rotație
-      const res = await checkRotationRules(selectedParcel.id, newPlantId, selectedYear);
-      setRotationMsg(res);
+        // 3. Verificare reguli rotație
+        const res = await checkRotationRules(selectedParcel.id, newPlantId, selectedYear);
+        setRotationMsg(res);
+
+        // 4. Verificare vecini
+        checkNeighborCompatibility(selectedParcel, selectedPlant);
+      }
+    } else {
+      setNeighborWarning(null);
     }
   };
 
@@ -250,11 +299,13 @@ export default function App() {
       setSelectedPlantId(plantId);
       await db.plantings.add({ parcelId: selectedParcel.id, year: selectedYear, plantId });
 
-      // Generare automată nume și pentru plante noi create
+      const createdPlant = { id: plantId, ...newPlant };
       const newParcelName = `${newPlant.name.trim()} 1`;
       await db.parcels.update(selectedParcel.id, { name: newParcelName });
       setSelectedParcel(prev => ({ ...prev, name: newParcelName }));
       setParcelNameInput(newParcelName);
+
+      checkNeighborCompatibility(selectedParcel, createdPlant);
     }
 
     setNewPlant({ name: '', family: 'Solanaceae', spacing: '30-40 cm', sun: 'Soare plin', water: 'Moderat', companions: '', avoid: '' });
@@ -399,7 +450,7 @@ export default function App() {
                   style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
-                    justify: 'space-between', 
+                    justifyContent: 'space-between', 
                     padding: '10px 12px', 
                     borderRadius: '8px', 
                     border: '2px solid', 
@@ -528,6 +579,25 @@ export default function App() {
                 </div>
               )}
 
+              {/* Mesaj Vecini Buni / Răi (Companion Planting) */}
+              {neighborWarning && (
+                <div style={{
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  backgroundColor: neighborWarning.status === 'warning' ? '#fee2e2' : '#f0fdf4',
+                  color: neighborWarning.status === 'warning' ? '#991b1b' : '#166534',
+                  border: '1px solid',
+                  borderColor: neighborWarning.status === 'warning' ? '#ef4444' : '#22c55e',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  {neighborWarning.status === 'warning' ? <ShieldAlert size={16} /> : <Check size={16} />}
+                  <span>{neighborWarning.message}</span>
+                </div>
+              )}
+
               {/* FIȘĂ TEHNICĂ PLANTĂ */}
               {currentPlantDetails && (
                 <div style={{ backgroundColor: 'white', borderRadius: '6px', padding: '10px', border: '1px solid #bbf7d0', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
@@ -573,7 +643,7 @@ export default function App() {
 
       </div>
 
-      {/* MODAL ADĂUGARE PLANTĂ NOUĂ IN CATALOG */}
+      {/* MODAL ADAUGARE PLANTA NOUA IN CATALOG */}
       {showAddPlantModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', width: '360px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
