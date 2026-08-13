@@ -2,25 +2,23 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('GradinaPWA');
 
-// Versiunea 5 cu index compus [parcelId+year] pentru rotație rapidă
 db.version(5).stores({
   gardens: 'id, name',
-  parcels: 'id, gardenId, name',
+  parcels: 'id, gardenId, name, row, col',
   plants: 'id, name, family',
   plantings: '++id, parcelId, year, plantId, [parcelId+year]',
   settings: 'key'
 });
 
 export const defaultPlants = [
-  // --- Legume & Fructe de pământ principale (1-42) ---
   {
     id: '1',
-    name: 'Tomate',
+    name: 'Roșii',
     family: 'Solanaceae',
     spacing: '40-50 cm',
     sun: 'Soare plin',
     water: 'Abundent',
-    companions: 'Busuioc, Morcov, Ceapă, Pătrunjel, Craițe, Galbenele',
+    companions: 'Busuioc, Morcov, Ceapă, Pătrunjel, Craițe, Gălbenele',
     avoid: 'Nuc, Cartof, Fenicul, Varză'
   },
   {
@@ -41,7 +39,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Abundent',
     companions: 'Fasole, Busuioc, Spanac, Mazăre, Cimbru',
-    avoid: 'Cartof, Tomate'
+    avoid: 'Cartof, Roșii'
   },
   {
     id: '4',
@@ -51,7 +49,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Moderat',
     companions: 'Fasole, Varză, Porumb, Craițe, Hrean',
-    avoid: 'Tomate, Castravete, Dovlecel, Floarea-soarelui'
+    avoid: 'Roșii, Castravete, Dovlecel, Floarea-soarelui'
   },
   {
     id: '5',
@@ -110,7 +108,7 @@ export const defaultPlants = [
     spacing: '5-10 cm',
     sun: 'Soare plin',
     water: 'Moderat',
-    companions: 'Praz, Ceapă, Tomate, Salată, Mazăre, Rozmarin',
+    companions: 'Praz, Ceapă, Roșii, Salată, Mazăre, Rozmarin',
     avoid: 'Mărar, Păstârnac, Fenicul'
   },
   {
@@ -120,7 +118,7 @@ export const defaultPlants = [
     spacing: '10-15 cm',
     sun: 'Soare / Umbră parțială',
     water: 'Moderat',
-    companions: 'Tomate, Ceapă, Galbenele, Sparanghel',
+    companions: 'Roșii, Ceapă, Gălbenele, Sparanghel',
     avoid: 'Mărar, Țelină'
   },
   {
@@ -140,7 +138,7 @@ export const defaultPlants = [
     spacing: '25-30 cm',
     sun: 'Soare / Umbră parțială',
     water: 'Abundent',
-    companions: 'Tomate, Varză, Praz, Fasole, Spanac',
+    companions: 'Roșii, Varză, Praz, Fasole, Spanac',
     avoid: 'Morcov, Păstârnac'
   },
   {
@@ -151,7 +149,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Moderat',
     companions: 'Varză, Castraveți, Ceapă, Salată',
-    avoid: 'Morcov, Tomate, Fenicul'
+    avoid: 'Morcov, Roșii, Fenicul'
   },
   {
     id: '15',
@@ -170,7 +168,7 @@ export const defaultPlants = [
     spacing: '10-15 cm',
     sun: 'Soare plin',
     water: 'Moderat',
-    companions: 'Morcov, Sfeclă, Tomate, Salată, Căpșuni',
+    companions: 'Morcov, Sfeclă, Roșii, Salată, Căpșuni',
     avoid: 'Mazăre, Fasole, Sparanghel'
   },
   {
@@ -180,7 +178,7 @@ export const defaultPlants = [
     spacing: '10-12 cm',
     sun: 'Soare plin',
     water: 'Rar',
-    companions: 'Tomate, Vinete, Morcov, Sfeclă, Căpșuni, Trandafiri',
+    companions: 'Roșii, Vinete, Morcov, Sfeclă, Căpșuni, Trandafiri',
     avoid: 'Mazăre, Fasole, Sparanghel'
   },
   {
@@ -231,7 +229,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Abundent',
     companions: 'Țelină, Mărar, Cimbru, Mentă, Salată, Cartof',
-    avoid: 'Tomate, Ardei, Căpșuni, Fasole urcătoare'
+    avoid: 'Roșii, Ardei, Căpșuni, Fasole urcătoare'
   },
   {
     id: '23',
@@ -241,7 +239,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Abundent',
     companions: 'Țelină, Oregano, Cimbru, Spanac',
-    avoid: 'Tomate, Căpșuni, Mazăre'
+    avoid: 'Roșii, Căpșuni, Mazăre'
   },
   {
     id: '24',
@@ -251,7 +249,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Abundent',
     companions: 'Țelină, Mărar, Rozmarin, Mentă, Salată',
-    avoid: 'Tomate, Căpșuni, Oregano'
+    avoid: 'Roșii, Căpșuni, Oregano'
   },
   {
     id: '25',
@@ -271,7 +269,7 @@ export const defaultPlants = [
     sun: 'Soare / Umbră parțială',
     water: 'Moderat',
     companions: 'Sfeclă, Castraveți, Salată, Cimbru, Mărar',
-    avoid: 'Tomate, Ardei, Căpșuni'
+    avoid: 'Roșii, Ardei, Căpșuni'
   },
   {
     id: '27',
@@ -311,7 +309,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Moderat',
     companions: 'Porumb, Castraveți',
-    avoid: 'Cartof, Tomate'
+    avoid: 'Cartof, Roșii'
   },
   {
     id: '31',
@@ -360,7 +358,7 @@ export const defaultPlants = [
     spacing: '20-25 cm',
     sun: 'Soare plin',
     water: 'Moderat',
-    companions: 'Tomate, Ardei, Vinete, Oregano',
+    companions: 'Roșii, Ardei, Vinete, Oregano',
     avoid: 'Rucola, Mărar'
   },
   {
@@ -370,7 +368,7 @@ export const defaultPlants = [
     spacing: '20-25 cm',
     sun: 'Soare plin',
     water: 'Rar',
-    companions: 'Varză, Vinete, Tomate, Fasole, Căpșuni',
+    companions: 'Varză, Vinete, Roșii, Fasole, Căpșuni',
     avoid: 'Mărar'
   },
   {
@@ -380,7 +378,7 @@ export const defaultPlants = [
     spacing: '25-30 cm',
     sun: 'Soare plin',
     water: 'Rar',
-    companions: 'Ardei, Vinete, Tomate, Dovlecel',
+    companions: 'Ardei, Vinete, Roșii, Dovlecel',
     avoid: 'Nu are incompatibilități majore'
   },
   {
@@ -390,7 +388,7 @@ export const defaultPlants = [
     spacing: '30-40 cm',
     sun: 'Soare / Umbră parțială',
     water: 'Moderat',
-    companions: 'Varză, Tomate',
+    companions: 'Varză, Roșii',
     avoid: 'Pătrunjel'
   },
   {
@@ -421,7 +419,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Moderat',
     companions: 'Fasole, Dovleac, Dovlecel, Mazăre, Castraveți, Floarea-soarelui',
-    avoid: 'Tomate'
+    avoid: 'Roșii'
   },
   {
     id: '42',
@@ -433,8 +431,6 @@ export const defaultPlants = [
     companions: 'Praz, Ceapă',
     avoid: 'Mazăre'
   },
-
-  // --- Plante speciale, condimente și culturi secundare (43-82) ---
   {
     id: '43',
     name: 'Batat (Cartof dulce)',
@@ -452,7 +448,7 @@ export const defaultPlants = [
     spacing: '45-50 cm',
     sun: 'Soare plin',
     water: 'Moderat',
-    companions: 'Tomate, Pătrunjel, Busuioc, Salată',
+    companions: 'Roșii, Pătrunjel, Busuioc, Salată',
     avoid: 'Ceapă, Usturoi, Praz'
   },
   {
@@ -483,7 +479,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Moderat',
     companions: 'Salată, Mentă',
-    avoid: 'Tomate, Morcov, Fasole, Ardei, Coriandru'
+    avoid: 'Roșii, Morcov, Fasole, Ardei, Coriandru'
   },
   {
     id: '48',
@@ -522,7 +518,7 @@ export const defaultPlants = [
     spacing: '30-40 cm',
     sun: 'Soare plin',
     water: 'Moderat',
-    companions: 'Vinete, Tomate, Salată',
+    companions: 'Vinete, Roșii, Salată',
     avoid: 'Nu are antagoniști direcți'
   },
   {
@@ -562,7 +558,7 @@ export const defaultPlants = [
     spacing: '30-40 cm',
     sun: 'Soare / Umbră parțială',
     water: 'Moderat',
-    companions: 'Tomate, Varză',
+    companions: 'Roșii, Varză',
     avoid: 'Nu are antagoniști direcți'
   },
   {
@@ -572,7 +568,7 @@ export const defaultPlants = [
     spacing: '30-40 cm',
     sun: 'Soare plin',
     water: 'Moderat',
-    companions: 'Tomate, Dovlecel, Căpșuni',
+    companions: 'Roșii, Dovlecel, Căpșuni',
     avoid: 'Nu are antagoniști direcți'
   },
   {
@@ -643,7 +639,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Abundent',
     companions: 'Țelină, Mărar, Salată',
-    avoid: 'Tomate, Căpșuni'
+    avoid: 'Roșii, Căpșuni'
   },
   {
     id: '64',
@@ -653,7 +649,7 @@ export const defaultPlants = [
     sun: 'Soare plin',
     water: 'Moderat',
     companions: 'Sfeclă, Cimbru, Mărar',
-    avoid: 'Tomate, Fasole urcătoare'
+    avoid: 'Roșii, Fasole urcătoare'
   },
   {
     id: '65',
@@ -663,7 +659,7 @@ export const defaultPlants = [
     sun: 'Soare / Umbră parțială',
     water: 'Moderat',
     companions: 'Mentă, Ridichi, Salată',
-    avoid: 'Tomate'
+    avoid: 'Roșii'
   },
   {
     id: '66',
@@ -772,7 +768,7 @@ export const defaultPlants = [
     spacing: '20-30 cm',
     sun: 'Soare plin',
     water: 'Moderat',
-    companions: 'Tomate, Castraveți, Morcov, Fasole',
+    companions: 'Roșii, Castraveți, Morcov, Fasole',
     avoid: 'Nu are antagoniști direcți'
   },
   {
@@ -782,7 +778,7 @@ export const defaultPlants = [
     spacing: '20-25 cm',
     sun: 'Soare plin',
     water: 'Moderat',
-    companions: 'Tomate, Vinete, Cartof, Pepene',
+    companions: 'Roșii, Vinete, Cartof, Pepene',
     avoid: 'Fasole'
   },
   {
@@ -792,7 +788,7 @@ export const defaultPlants = [
     spacing: '15-20 cm',
     sun: 'Soare / Umbră parțială',
     water: 'Moderat',
-    companions: 'Morcov, Tomate, Trandafiri',
+    companions: 'Morcov, Roșii, Trandafiri',
     avoid: 'Mazăre, Fasole'
   },
   {
@@ -841,7 +837,6 @@ db.on('populate', async () => {
   await db.plants.bulkAdd(defaultPlants);
 });
 
-// Sincronizează noile plante în IndexedDB la fiecare pornire/refresh
 export async function ensureDefaultPlants() {
   await db.plants.bulkPut(defaultPlants);
 }
@@ -862,12 +857,61 @@ export async function checkRotationRules(parcelId, plantId, year) {
   if (currentPlant && previousPlant && currentPlant.family === previousPlant.family) {
     return {
       status: 'warning',
-      message: `⚠️ Atenție: Anul trecut ai avut ${previousPlant.name} (${previousPlant.family}). Nu se recomandă plante din aceeași familie consecutiv!`
+      message: `⚠️ Rotație slabă: Anul trecut ai avut ${previousPlant.name} (${previousPlant.family}). Schimbă familia de plante!`
     };
   }
 
   return {
     status: 'success',
-    message: `✅ Rotație bună! Anul trecut ai avut ${previousPlant?.name}.`
+    message: `✅ Rotație optimă! Anul trecut ai avut ${previousPlant?.name}.`
   };
+}
+
+export async function checkNeighborConflicts(targetParcelId, plantId, year, neighborParcelIds = []) {
+  if (!neighborParcelIds || neighborParcelIds.length === 0) return [];
+
+  const candidatePlant = await db.plants.get(plantId);
+  if (!candidatePlant) return [];
+
+  const activeNeighborPlantings = await db.plantings
+    .where('year')
+    .equals(year)
+    .filter(p => neighborParcelIds.includes(p.parcelId))
+    .toArray();
+
+  const warnings = [];
+
+  for (const planting of activeNeighborPlantings) {
+    const neighborPlant = await db.plants.get(planting.plantId);
+    if (!neighborPlant) continue;
+
+    const neighborParcel = await db.parcels.get(planting.parcelId);
+    const parcelName = neighborParcel ? neighborParcel.name : 'o parcelă vecină';
+
+    const candidateAvoids = (candidatePlant.avoid || '').toLowerCase();
+    const neighborAvoids = (neighborPlant.avoid || '').toLowerCase();
+    
+    const candidateName = candidatePlant.name.toLowerCase();
+    const neighborName = neighborPlant.name.toLowerCase();
+
+    const candidateBase = candidateName.split(' ')[0];
+    const neighborBase = neighborName.split(' ')[0];
+
+    const directConflict = candidateAvoids.includes(neighborName) || 
+                           (neighborBase.length > 3 && candidateAvoids.includes(neighborBase));
+                           
+    const reverseConflict = neighborAvoids.includes(candidateName) || 
+                            (candidateBase.length > 3 && neighborAvoids.includes(candidateBase));
+
+    if (directConflict || reverseConflict) {
+      warnings.push({
+        status: 'danger',
+        neighborParcelName: parcelName,
+        neighborPlantName: neighborPlant.name,
+        message: `Bă, nu e în regulă! Pe ${parcelName} ai ${neighborPlant.name}. ${candidatePlant.name} și ${neighborPlant.name} nu se înțeleg bine alături!`
+      });
+    }
+  }
+
+  return warnings;
 }
