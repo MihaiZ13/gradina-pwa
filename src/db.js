@@ -830,6 +830,386 @@ export const defaultPlants = [
     water: 'Rar',
     companions: 'Salată, Morcov',
     avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '83',
+    name: 'Varză roșie',
+    family: 'Brassicaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Țelină, Mărar, Ceapă, Sfeclă, Spanac, Mușețel',
+    avoid: 'Roșii, Căpșuni, Fasole urcătoare'
+  },
+  {
+    id: '84',
+    name: 'Varză creață (Savoy)',
+    family: 'Brassicaceae',
+    spacing: '40-50 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Țelină, Ceapă, Mărar, Spanac, Cimbru',
+    avoid: 'Roșii, Căpșuni, Fasole urcătoare'
+  },
+  {
+    id: '85',
+    name: 'Muștar de frunze',
+    family: 'Brassicaceae',
+    spacing: '20-30 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Mărar, Ceapă, Salată, Sfeclă, Spanac',
+    avoid: 'Căpșuni, Roșii'
+  },
+  {
+    id: '86',
+    name: 'Nap suedez (Rutabaga)',
+    family: 'Brassicaceae',
+    spacing: '25-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Mazăre, Ceapă, Salată, Mărar',
+    avoid: 'Muștar'
+  },
+  {
+    id: '87',
+    name: 'Țelină de rădăcină',
+    family: 'Apiaceae',
+    spacing: '25-30 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Abundent',
+    companions: 'Varză, Ceapă, Praz, Fasole, Roșii, Salată',
+    avoid: 'Morcov, Păstârnac'
+  },
+  {
+    id: '88',
+    name: 'Asmățui',
+    family: 'Apiaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Ridichi, Salată, Morcov',
+    avoid: 'Fenicul'
+  },
+  {
+    id: '89',
+    name: 'Pătrunjel de rădăcină',
+    family: 'Apiaceae',
+    spacing: '10-15 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Roșii, Ceapă, Praz, Sparanghel, Salată',
+    avoid: 'Mărar, Fenicul, Țelină'
+  },
+  {
+    id: '90',
+    name: 'Cicoare',
+    family: 'Asteraceae',
+    spacing: '20-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Morcov, Ridichi, Salată, Ceapă',
+    avoid: 'Fenicul'
+  },
+  {
+    id: '91',
+    name: 'Radicchio',
+    family: 'Asteraceae',
+    spacing: '25-30 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Morcov, Ceapă, Ridichi, Praz',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '92',
+    name: 'Escarolă',
+    family: 'Asteraceae',
+    spacing: '25-30 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Morcov, Ridichi, Ceapă',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '93',
+    name: 'Mușețel',
+    family: 'Asteraceae',
+    spacing: '20-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Varză, Ceapă, Salată, Castraveți',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '94',
+    name: 'Salsifi',
+    family: 'Asteraceae',
+    spacing: '10-15 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Morcov, Ceapă, Salată',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '95',
+    name: 'Condurași (Năsturel indian)',
+    family: 'Tropaeolaceae',
+    spacing: '30-40 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Dovleac, Dovlecel, Castravete, Roșii, Ridichi',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '96',
+    name: 'Năsturel de apă',
+    family: 'Brassicaceae',
+    spacing: '15-20 cm',
+    sun: 'Umbră / Umbră parțială',
+    water: 'Abundent',
+    companions: 'Salată, Ridichi, Spanac',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '97',
+    name: 'Rubarbă',
+    family: 'Polygonaceae',
+    spacing: '90-120 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Abundent',
+    companions: 'Căpșuni, Usturoi, Ceapă, Cimbru',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '98',
+    name: 'Patison',
+    family: 'Cucurbitaceae',
+    spacing: '80-100 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Porumb, Fasole, Condurași, Mărar, Ridichi',
+    avoid: 'Cartof'
+  },
+  {
+    id: '99',
+    name: 'Dovleac Butternut',
+    family: 'Cucurbitaceae',
+    spacing: '100-150 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Porumb, Fasole, Condurași, Gălbenele',
+    avoid: 'Cartof'
+  },
+  {
+    id: '100',
+    name: 'Cimbrișor de grădină',
+    family: 'Lamiaceae',
+    spacing: '20-30 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Varză, Vinete, Roșii, Fasole, Căpșuni',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '101',
+    name: 'Zmeur',
+    family: 'Rosaceae',
+    spacing: '60-100 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Usturoi, Ceapă, Cimbru, Gălbenele',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '102',
+    name: 'Mur',
+    family: 'Rosaceae',
+    spacing: '100-150 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Usturoi, Ceapă, Cimbru, Gălbenele',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '103',
+    name: 'Coacăz roșu',
+    family: 'Grossulariaceae',
+    spacing: '90-120 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Căpșuni, Cimbru, Gălbenele',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '104',
+    name: 'Coacăz negru',
+    family: 'Grossulariaceae',
+    spacing: '120-150 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Căpșuni, Cimbru, Gălbenele',
+    avoid: 'Pin cu cinci ace în zone cu risc de rugina coacăzului'
+  },
+  {
+    id: '105',
+    name: 'Agriș',
+    family: 'Grossulariaceae',
+    spacing: '90-120 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Căpșuni, Cimbru, Gălbenele',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '106',
+    name: 'Afin',
+    family: 'Ericaceae',
+    spacing: '100-150 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Căpșuni, Cimbru, Gălbenele',
+    avoid: 'Soluri calcaroase, plante care preferă sol alcalin'
+  },
+  {
+    id: '107',
+    name: 'Aronia',
+    family: 'Rosaceae',
+    spacing: '150-200 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Căpșuni, Cimbru, Gălbenele',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '108',
+    name: 'Cătină',
+    family: 'Elaeagnaceae',
+    spacing: '150-250 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Cimbru, Gălbenele, Mușețel',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '109',
+    name: 'Viță de vie',
+    family: 'Vitaceae',
+    spacing: '100-150 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Cimbru, Isop, Lavandă, Gălbenele, Usturoi',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '110',
+    name: 'Soc',
+    family: 'Adoxaceae',
+    spacing: '250-400 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Căpșuni, Coacăz, Zmeur',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '111',
+    name: 'Goji',
+    family: 'Solanaceae',
+    spacing: '100-150 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Usturoi, Ceapă, Gălbenele, Cimbru',
+    avoid: 'Cartof, Roșii, Ardei, Vinete'
+  },
+  {
+    id: '112',
+    name: 'Corn',
+    family: 'Cornaceae',
+    spacing: '300-500 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Căpșuni, Cimbru, Gălbenele',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '113',
+    name: 'Kiwi rezistent',
+    family: 'Actinidiaceae',
+    spacing: '200-400 cm',
+    sun: 'Soare plin',
+    water: 'Abundent',
+    companions: 'Cimbru, Gălbenele, Trifoi',
+    avoid: 'Nu sunt documentați antagoniști direcți'
+  },
+  {
+    id: '114',
+    name: 'Știr',
+    family: 'Amaranthaceae',
+    spacing: '20-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Porumb, Fasole, Dovleac, Sfeclă',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '115',
+    name: 'Creson de apă',
+    family: 'Brassicaceae',
+    spacing: '15-20 cm',
+    sun: 'Umbră / Umbră parțială',
+    water: 'Abundent',
+    companions: 'Salată, Ridichi, Spanac',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '116',
+    name: 'Mușețel roman',
+    family: 'Asteraceae',
+    spacing: '20-30 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Varză, Ceapă, Salată, Castraveți',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '117',
+    name: 'Cimbrișor',
+    family: 'Lamiaceae',
+    spacing: '20-30 cm',
+    sun: 'Soare plin',
+    water: 'Rar',
+    companions: 'Varză, Roșii, Vinete, Fasole, Căpșuni',
+    avoid: 'Nu are incompatibilități majore'
+  },
+  {
+    id: '118',
+    name: 'Trifoi alb',
+    family: 'Fabaceae',
+    spacing: '10-20 cm',
+    sun: 'Soare / Umbră parțială',
+    water: 'Moderat',
+    companions: 'Porumb, Dovleac, Pom fructifer, Căpșuni',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '119',
+    name: 'Trifoi roșu',
+    family: 'Fabaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Porumb, Dovleac, Pom fructifer, Căpșuni',
+    avoid: 'Nu are antagoniști direcți'
+  },
+  {
+    id: '120',
+    name: 'Hrișcă',
+    family: 'Polygonaceae',
+    spacing: '15-20 cm',
+    sun: 'Soare plin',
+    water: 'Moderat',
+    companions: 'Pom fructifer, Dovleac, Porumb, Fasole',
+    avoid: 'Nu are antagoniști direcți'
   }
 ];
 
