@@ -54,7 +54,7 @@ function GeomanControls({ isLocked, onPolygonCreated }) {
 }
 
 export default function App() {
-  const [imageBounds] = useState([[0, 0], [1000, 1000]]);
+  const [imageBounds, setImageBounds] = useState([[0, 0], [1000, 1000]]);
   const [isLocked, setIsLocked] = useState(false);
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedParcel, setSelectedParcel] = useState(null);
@@ -88,6 +88,20 @@ export default function App() {
   const activeGardenId = activeGardenSetting?.value;
 
   const activeGarden = gardens.find(g => g.id === activeGardenId) || gardens[0];
+
+  // Calculează aspect ratio-ul real al imaginii de fundal pentru a preveni deformarea
+  useEffect(() => {
+    if (activeGarden?.bgImage) {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = img.naturalHeight / img.naturalWidth;
+        setImageBounds([[0, 0], [1000, 1000 * ratio]]);
+      };
+      img.src = activeGarden.bgImage;
+    } else {
+      setImageBounds([[0, 0], [1000, 1000]]);
+    }
+  }, [activeGarden?.bgImage]);
 
   const parcels = useLiveQuery(
     () => activeGarden ? db.parcels.where({ gardenId: activeGarden.id }).toArray() : [],

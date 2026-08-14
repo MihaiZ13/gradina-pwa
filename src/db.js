@@ -837,8 +837,12 @@ db.on('populate', async () => {
   await db.plants.bulkAdd(defaultPlants);
 });
 
+// Adaugă plantele implicite doar dacă baza de date e goală
 export async function ensureDefaultPlants() {
-  await db.plants.bulkPut(defaultPlants);
+  const count = await db.plants.count();
+  if (count === 0) {
+    await db.plants.bulkAdd(defaultPlants);
+  }
 }
 
 export async function checkRotationRules(parcelId, plantId, year) {
@@ -914,4 +918,59 @@ export async function checkNeighborConflicts(targetParcelId, plantId, year, neig
   }
 
   return warnings;
+}
+
+// EXPORT DATE (Backup JSON)
+export async function exportDatabase() {
+  const gardens = await db.gardens.toArray();
+  const parcels = await db.parcels.toArray();
+  const plants = await db.plants.toArray();
+  const plantings = await db.plantings.toArray();
+  const settings = await db.settings.toArray();
+
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    gardens,
+    parcels,
+    plants,
+    plantings,
+    settings
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `gradina_backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// IMPORT DATE (Restore JSON)
+export async function importDatabase(jsonString) {
+  try {
+    const data = JSON.parse(jsonString);
+    if (!data.gardens || !data.parcels) {
+      throw new Error('Fișier JSON invalid!');
+    }
+
+    await db.transaction('rw', [db.gardens, db.parcels, db.plants, db.plantings, db.settings], async () => {
+      await db.gardens.clear();
+      await db.parcels.clear();
+      await db.plants.clear();
+      await db.plantings.clear();
+      await db.settings.clear();
+
+      if (data.gardens?.length) await db.gardens.bulkAdd(data.gardens);
+      if (data.parcels?.length) await db.parcels.bulkAdd(data.parcels);
+      if (data.plants?.length) await db.plants.bulkAdd(data.plants);
+      if (data.plantings?.length) await db.plantings.bulkAdd(data.plantings);
+      if (data.settings?.length) await db.settings.bulkAdd(data.settings);
+    });
+
+    return { success: true, message: 'Datele au fost restaurate cu succes!' };
+  } catch (err) {
+    return { success: false, message: 'Eroare la import: ' + err.message };
+  }
 }
