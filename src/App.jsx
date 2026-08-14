@@ -19,6 +19,21 @@ function MapResizeController({ activeTab }) {
   return null;
 }
 
+// Helper pentru încadrarea automată a hărții și permiterea zoom-out-ului complet pe mobil
+function FitMapToBounds({ bounds, activeTab }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !bounds) return;
+    const timer = setTimeout(() => {
+      map.fitBounds(bounds);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map, bounds, activeTab]);
+
+  return null;
+}
+
 function GeomanControls({ isLocked, onPolygonCreated }) {
   const map = useMap();
 
@@ -253,8 +268,6 @@ export default function App() {
         checkNeighborCompatibility(parcel, selectedPlant);
       }
     }
-
-    // Pe mobil, dacă selectăm o parcelă din meniu, poți opta să rămâi în meniu pentru editare
   };
 
   const handleSaveParcelName = async () => {
@@ -368,7 +381,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', padding: isMobile ? '6px' : '12px', gap: isMobile ? '6px' : '12px', backgroundColor: '#f8fafc', boxSizing: 'border-[#f8fafc]', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', padding: isMobile ? '6px' : '12px', gap: isMobile ? '6px' : '12px', backgroundColor: '#f8fafc', boxSizing: 'border-box', overflow: 'hidden' }}>
       
       {/* 1. BARA DE SUS (HEADER RESPONSIV) */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'white', padding: isMobile ? '8px 10px' : '12px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', zIndex: 10 }}>
@@ -448,8 +461,19 @@ export default function App() {
           height: '100%'
         }}>
           {activeGarden ? (
-            <MapContainer crs={L.CRS.Simple} bounds={imageBounds} style={{ height: '100%', width: '100%' }}>
+            <MapContainer 
+              crs={L.CRS.Simple} 
+              bounds={imageBounds} 
+              maxBounds={imageBounds}
+              maxBoundsViscosity={0.5}
+              minZoom={-5}
+              maxZoom={5}
+              zoomSnap={0.25}
+              style={{ height: '100%', width: '100%' }}
+            >
               <MapResizeController activeTab={activeTab} />
+              <FitMapToBounds bounds={imageBounds} activeTab={activeTab} />
+              
               <ImageOverlay url={activeGarden.bgImage} bounds={imageBounds} />
               
               <GeomanControls isLocked={isLocked} onPolygonCreated={handlePolygonCreated} />
