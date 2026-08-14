@@ -7,15 +7,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
       manifest: {
-        name: 'Aplicație Grădină',
+        name: 'Planner Grădină PWA',
         short_name: 'Grădină',
-        description: 'Planificator de grădină și rotația culturilor 100% offline',
+        description: 'Aplicație interactivă pentru planificarea grădinii și rotația culturilor',
         theme_color: '#22c55e',
-        background_color: '#f8fafc',
+        background_color: '#ffffff',
         display: 'standalone',
-        orientation: 'portrait',
+        start_url: '/',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -26,27 +26,18 @@ export default defineConfig({
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*tile\.openstreetmap\.org\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'openstreetmap-tiles',
-              expiration: {
-                maxEntries: 500,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 zile
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
+        // Caching pentru funcționare 100% offline
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,json}']
       }
     })
   ]

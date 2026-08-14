@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, ImageOverlay, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, checkRotationRules, ensureDefaultPlants } from './db';
-import { Lock, Unlock, Plus, Trash2, MapPin, Check, Edit2, Save, Info, Sun, Droplets, Ruler, Users, ShieldAlert, X } from 'lucide-react';
+import { db, checkRotationRules, ensureDefaultPlants, exportDatabase, importDatabase } from './db';
+import { Lock, Unlock, Plus, Trash2, MapPin, Check, Edit2, Save, Info, Sun, Droplets, Ruler, Users, ShieldAlert, X, Download, Upload } from 'lucide-react';
 
 function GeomanControls({ isLocked, onPolygonCreated }) {
   const map = useMap();
@@ -62,6 +62,8 @@ export default function App() {
   const [rotationMsg, setRotationMsg] = useState(null);
   const [neighborWarning, setNeighborWarning] = useState(null);
 
+  const fileInputRef = useRef(null);
+
   // Stări pentru editare nume parcelă
   const [isEditingParcelName, setIsEditingParcelName] = useState(false);
   const [parcelNameInput, setParcelNameInput] = useState('');
@@ -108,20 +110,24 @@ export default function App() {
     [activeGarden?.id]
   ) || [];
 
-  const plants = useLiveQuery(() => db.plants.toArray()) || [];
+  // Preluăm plantele și le sortăm direct în interogare A-Z
+  const plants = useLiveQuery(async () => {
+    const list = await db.plants.toArray();
+    return list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }));
+  }) || [];
+
   const plantings = useLiveQuery(() => db.plantings.where({ year: selectedYear }).toArray()) || [];
 
   // Planta selectată curent
   const currentPlantDetails = plants.find(p => p.id === selectedPlantId);
 
-  // Funcție pentru verificarea vecinilor din parcelele apropiate / din jur
+  // Verificare compatibilitate vecini
   const checkNeighborCompatibility = (currentParcel, newPlantData) => {
     if (!parcels || parcels.length <= 1 || !newPlantData) {
       setNeighborWarning(null);
       return;
     }
 
-    // Găsim alte parcele plantate în același an (excludem parcela curentă)
     const otherPlantings = plantings.filter(p => p.parcelId !== currentParcel.id);
     let conflicts = [];
 
@@ -129,7 +135,6 @@ export default function App() {
       const pDetails = plants.find(pl => pl.id === op.plantId);
       const otherParcel = parcels.find(par => par.id === op.parcelId);
       if (pDetails && otherParcel) {
-        // Verificăm dacă noua plantă are în lista de 'avoid' planta vecină sau invers
         const avoidList = (newPlantData.avoid || '').toLowerCase();
         const otherName = pDetails.name.toLowerCase();
         
@@ -244,13 +249,11 @@ export default function App() {
     }
   };
 
-  // SCHIMBARE PLANTĂ + GENERARE AUTOMATĂ NUME PARCELĂ + VERIFICARE VECINI
   const handlePlantChange = async (e) => {
     const newPlantId = e.target.value;
     setSelectedPlantId(newPlantId);
 
     if (selectedParcel && newPlantId) {
-      // 1. Actualizare / Adăugare în baza de date
       const existing = plantings.find(p => p.parcelId === selectedParcel.id);
       if (existing) {
         await db.plantings.update(existing.id, { plantId: newPlantId });
@@ -258,7 +261,6 @@ export default function App() {
         await db.plantings.add({ parcelId: selectedParcel.id, year: selectedYear, plantId: newPlantId });
       }
 
-      // 2. Generare automată nume parcelă
       const selectedPlant = plants.find(p => p.id === newPlantId);
       if (selectedPlant) {
         const plantName = selectedPlant.name;
@@ -280,11 +282,9 @@ export default function App() {
         setSelectedParcel(prev => ({ ...prev, name: newParcelName }));
         setParcelNameInput(newParcelName);
 
-        // 3. Verificare reguli rotație
         const res = await checkRotationRules(selectedParcel.id, newPlantId, selectedYear);
         setRotationMsg(res);
 
-        // 4. Verificare vecini
         checkNeighborCompatibility(selectedParcel, selectedPlant);
       }
     } else {
@@ -292,7 +292,6 @@ export default function App() {
     }
   };
 
-  // Salvare plantă nouă în catalog
   const handleSaveCustomPlant = async (e) => {
     e.preventDefault();
     if (!newPlant.name.trim()) return;
@@ -326,12 +325,30 @@ export default function App() {
     setShowAddPlantModal(false);
   };
 
+  // Handler Import JSON Backup
+  const handleFileImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (window.confirm('Atenție! Importul va înlocui datele existente cu cele din fișierul de backup. Continui?')) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const res = await importDatabase(event.target.result);
+        alert(res.message);
+        if (res.success) {
+          window.location.reload();
+        }
+      };
+      reader.readAsText(file);
+    }
+    e.target.value = '';
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '12px', gap: '12px', backgroundColor: '#f8fafc' }}>
       
       {/* Bara de Sus */}
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        
         <h2 style={{ margin: 0, fontSize: '18px', color: '#1e293b' }}>
           🌱 {activeGarden ? activeGarden.name : 'Aplicație Grădină'}
         </h2>
@@ -346,14 +363,47 @@ export default function App() {
           </button>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-          <strong>Sezon:</strong>
-          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} style={{ padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-            <option value={2025}>2025</option>
-            <option value={2026}>2026</option>
-            <option value={2027}>2027</option>
-            <option value={2028}>2028</option>
-          </select>
+        {/* Zona Dreapta: Backup + Sezon */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+          
+          {/* Butoane Backup JSON */}
+          <button
+            onClick={exportDatabase}
+            title="Descarcă Backup JSON"
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            <Download size={14} /> Export
+          </button>
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            title="Încarcă fișier Backup JSON"
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            <Upload size={14} /> Import
+          </button>
+
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileImport} 
+            accept=".json" 
+            style={{ display: 'none' }} 
+          />
+
+          <div style={{ width: '1px', height: '24px', backgroundColor: '#cbd5e1', margin: '0 4px' }} />
+
+          {/* Selector Sezon */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <strong>Sezon:</strong>
+            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} style={{ padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+              <option value={2025}>2025</option>
+              <option value={2026}>2026</option>
+              <option value={2027}>2027</option>
+              <option value={2028}>2028</option>
+            </select>
+          </div>
+
         </div>
       </div>
 
