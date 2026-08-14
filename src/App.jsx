@@ -4,7 +4,20 @@ import L from 'leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, checkRotationRules, ensureDefaultPlants, exportDatabase, importDatabase } from './db';
-import { Lock, Unlock, Plus, Trash2, MapPin, Check, Edit2, Save, Info, Sun, Droplets, Ruler, Users, ShieldAlert, X, Download, Upload } from 'lucide-react';
+import { Lock, Unlock, Plus, Trash2, MapPin, Check, Edit2, Save, Info, Sun, Droplets, Ruler, Users, ShieldAlert, X, Download, Upload, Map as MapIcon, List } from 'lucide-react';
+
+// Controller pentru recalcularea dimensiunii hărții la schimbarea tab-ului
+function MapResizeController({ activeTab }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map, activeTab]);
+  return null;
+}
 
 function GeomanControls({ isLocked, onPolygonCreated }) {
   const map = useMap();
@@ -62,6 +75,10 @@ export default function App() {
   const [rotationMsg, setRotationMsg] = useState(null);
   const [neighborWarning, setNeighborWarning] = useState(null);
 
+  // Stare pentru navigare Mobil (Tab-uri)
+  const [activeTab, setActiveTab] = useState('map'); // 'map' sau 'menu'
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
   const fileInputRef = useRef(null);
 
   // Stări pentru editare nume parcelă
@@ -79,6 +96,15 @@ export default function App() {
     name: '', family: 'Solanaceae', spacing: '30-40 cm', sun: 'Soare plin', water: 'Moderat', companions: '', avoid: ''
   });
 
+  // Detectare re-dimensionare ecran
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Ne asigurăm că există plantele implicite
   useEffect(() => {
     ensureDefaultPlants();
@@ -91,7 +117,7 @@ export default function App() {
 
   const activeGarden = gardens.find(g => g.id === activeGardenId) || gardens[0];
 
-  // Calculează aspect ratio-ul real al imaginii de fundal pentru a preveni deformarea
+  // Calculează aspect ratio-ul real al imaginii de fundal
   useEffect(() => {
     if (activeGarden?.bgImage) {
       const img = new Image();
@@ -110,7 +136,6 @@ export default function App() {
     [activeGarden?.id]
   ) || [];
 
-  // Preluăm plantele și le sortăm direct în interogare A-Z
   const plants = useLiveQuery(async () => {
     const list = await db.plants.toArray();
     return list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }));
@@ -118,10 +143,8 @@ export default function App() {
 
   const plantings = useLiveQuery(() => db.plantings.where({ year: selectedYear }).toArray()) || [];
 
-  // Planta selectată curent
   const currentPlantDetails = plants.find(p => p.id === selectedPlantId);
 
-  // Verificare compatibilitate vecini
   const checkNeighborCompatibility = (currentParcel, newPlantData) => {
     if (!parcels || parcels.length <= 1 || !newPlantData) {
       setNeighborWarning(null);
@@ -154,7 +177,6 @@ export default function App() {
     }
   };
 
-  // Salvare grădină activă
   const handleSelectGarden = async (id) => {
     await db.settings.put({ key: 'activeGardenId', value: id });
     setSelectedParcel(null);
@@ -231,6 +253,8 @@ export default function App() {
         checkNeighborCompatibility(parcel, selectedPlant);
       }
     }
+
+    // Pe mobil, dacă selectăm o parcelă din meniu, poți opta să rămâi în meniu pentru editare
   };
 
   const handleSaveParcelName = async () => {
@@ -325,7 +349,6 @@ export default function App() {
     setShowAddPlantModal(false);
   };
 
-  // Handler Import JSON Backup
   const handleFileImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -345,42 +368,45 @@ export default function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '12px', gap: '12px', backgroundColor: '#f8fafc' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', padding: isMobile ? '6px' : '12px', gap: isMobile ? '6px' : '12px', backgroundColor: '#f8fafc', boxSizing: 'border-[#f8fafc]', overflow: 'hidden' }}>
       
-      {/* Bara de Sus */}
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ margin: 0, fontSize: '18px', color: '#1e293b' }}>
-          🌱 {activeGarden ? activeGarden.name : 'Aplicație Grădină'}
-        </h2>
+      {/* 1. BARA DE SUS (HEADER RESPONSIV) */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'white', padding: isMobile ? '8px 10px' : '12px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', zIndex: 10 }}>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '18px' }}>🌱</span>
+          <h2 style={{ margin: 0, fontSize: isMobile ? '15px' : '18px', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: isMobile ? '130px' : 'none' }}>
+            {activeGarden ? activeGarden.name : 'Grădină'}
+          </h2>
+        </div>
 
         {activeGarden && (
           <button 
             onClick={() => setIsLocked(!isLocked)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: isLocked ? '#22c55e' : '#f59e0b', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', marginLeft: '12px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', background: isLocked ? '#22c55e' : '#f59e0b', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
           >
-            {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
-            <span>{isLocked ? 'Harta Blocată (Poți Desena)' : 'Deblocată (Poți Muta Harta)'}</span>
+            {isLocked ? <Lock size={15} /> : <Unlock size={15} />}
+            <span>{isLocked ? (isMobile ? 'Desen' : 'Harta Blocată (Desen)') : (isMobile ? 'Muta' : 'Deblocată (Muta Harta)')}</span>
           </button>
         )}
 
         {/* Zona Dreapta: Backup + Sezon */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
           
-          {/* Butoane Backup JSON */}
           <button
             onClick={exportDatabase}
             title="Descarcă Backup JSON"
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '6px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
           >
-            <Download size={14} /> Export
+            <Download size={14} /> {!isMobile && 'Export'}
           </button>
 
           <button
             onClick={() => fileInputRef.current?.click()}
             title="Încarcă fișier Backup JSON"
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '6px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
           >
-            <Upload size={14} /> Import
+            <Upload size={14} /> {!isMobile && 'Import'}
           </button>
 
           <input 
@@ -391,12 +417,12 @@ export default function App() {
             style={{ display: 'none' }} 
           />
 
-          <div style={{ width: '1px', height: '24px', backgroundColor: '#cbd5e1', margin: '0 4px' }} />
+          <div style={{ width: '1px', height: '20px', backgroundColor: '#cbd5e1', margin: '0 2px' }} />
 
           {/* Selector Sezon */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <strong>Sezon:</strong>
-            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} style={{ padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+            {!isMobile && <strong>Sezon:</strong>}
+            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid #cbd5e1', fontWeight: 'bold', fontSize: '12px' }}>
               <option value={2025}>2025</option>
               <option value={2026}>2026</option>
               <option value={2027}>2027</option>
@@ -407,13 +433,23 @@ export default function App() {
         </div>
       </div>
 
-      {/* Zona Principală */}
-      <div style={{ display: 'flex', flex: 1, gap: '12px', overflow: 'hidden' }}>
+      {/* 2. ZONA PRINCIPALE (CONTAINER FLEX) */}
+      <div style={{ display: 'flex', flex: 1, gap: '12px', overflow: 'hidden', position: 'relative' }}>
         
-        {/* Harta */}
-        <div style={{ flex: 1, position: 'relative', backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        {/* HARTA CONTAINER */}
+        <div style={{ 
+          flex: 1, 
+          position: 'relative', 
+          backgroundColor: 'white', 
+          borderRadius: '8px', 
+          overflow: 'hidden', 
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          display: isMobile && activeTab !== 'map' ? 'none' : 'block',
+          height: '100%'
+        }}>
           {activeGarden ? (
             <MapContainer crs={L.CRS.Simple} bounds={imageBounds} style={{ height: '100%', width: '100%' }}>
+              <MapResizeController activeTab={activeTab} />
               <ImageOverlay url={activeGarden.bgImage} bounds={imageBounds} />
               
               <GeomanControls isLocked={isLocked} onPolygonCreated={handlePolygonCreated} />
@@ -441,16 +477,28 @@ export default function App() {
               })}
             </MapContainer>
           ) : (
-            <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: '#64748b', gap: '12px' }}>
+            <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: '#64748b', gap: '12px', padding: '20px', textAlign: 'center' }}>
               <MapPin size={48} />
               <p style={{ fontSize: '16px', margin: 0 }}>Nu ai selectat nicio grădină.</p>
-              <p style={{ fontSize: '14px', margin: 0 }}>Folosește meniul din dreapta pentru a adăuga o grădină nouă!</p>
+              <p style={{ fontSize: '14px', margin: 0 }}>Comută pe tab-ul "Meniu & Parcele" de jos pentru a adăuga o grădină nouă!</p>
             </div>
           )}
         </div>
 
-        {/* Meniul din Dreapta */}
-        <div style={{ width: '340px', backgroundColor: 'white', padding: '16px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
+        {/* MENIU CONTAINER */}
+        <div style={{ 
+          width: isMobile ? '100%' : '340px', 
+          backgroundColor: 'white', 
+          padding: '16px', 
+          borderRadius: '8px', 
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
+          display: isMobile && activeTab !== 'menu' ? 'none' : 'flex', 
+          flexDirection: 'column', 
+          gap: '16px', 
+          overflowY: 'auto',
+          height: '100%',
+          boxSizing: 'border-box'
+        }}>
           
           {/* Header Meniu Grădini */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
@@ -707,10 +755,68 @@ export default function App() {
 
       </div>
 
+      {/* 3. BARA DE TABS PENTRU MOBIL (Apare doar pe ecrane mici) */}
+      {isMobile && (
+        <div style={{
+          display: 'flex',
+          backgroundColor: 'white',
+          borderTop: '1px solid #e2e8f0',
+          padding: '6px',
+          gap: '8px',
+          boxShadow: '0 -2px 10px rgba(0,0,0,0.05)',
+          borderRadius: '8px 8px 0 0',
+          zIndex: 1000
+        }}>
+          <button
+            onClick={() => setActiveTab('map')}
+            style={{
+              flex: 1,
+              padding: '10px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: activeTab === 'map' ? '#22c55e' : '#f1f5f9',
+              color: activeTab === 'map' ? 'white' : '#64748b',
+              fontWeight: 'bold',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            <MapIcon size={18} />
+            <span>Hartă</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('menu')}
+            style={{
+              flex: 1,
+              padding: '10px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: activeTab === 'menu' ? '#22c55e' : '#f1f5f9',
+              color: activeTab === 'menu' ? 'white' : '#64748b',
+              fontWeight: 'bold',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            <List size={18} />
+            <span>Meniu & Parcele</span>
+          </button>
+        </div>
+      )}
+
       {/* MODAL ADAUGARE PLANTA NOUA IN CATALOG */}
       {showAddPlantModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', width: '360px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '12px' }}>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
               <h3 style={{ margin: 0, fontSize: '16px' }}>Adaugă Plantă Nouă</h3>
               <button onClick={() => setShowAddPlantModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
