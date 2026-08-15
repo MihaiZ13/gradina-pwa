@@ -151,6 +151,20 @@ export default function App() {
     [activeGarden?.id]
   ) || [];
 
+  // Refs sincronizate cu valoarea curentă a lui activeGarden/parcels, citite la momentul
+  // apelului (nu capturate în closure) — evită parcele salvate pe grădina greșită când
+  // handlePolygonCreated e apelat dintr-un handler Geoman cu closure învechit.
+  const activeGardenRef = useRef(activeGarden);
+  const parcelsRef = useRef(parcels);
+
+  useEffect(() => {
+    activeGardenRef.current = activeGarden;
+  }, [activeGarden]);
+
+  useEffect(() => {
+    parcelsRef.current = parcels;
+  }, [parcels]);
+
   const plants = useLiveQuery(async () => {
     const list = await db.plants.toArray();
     return list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ro', { sensitivity: 'base' }));
@@ -244,9 +258,11 @@ export default function App() {
   };
 
   const handlePolygonCreated = async (coordinates) => {
-    if (!activeGarden) return;
-    const name = `Parcela ${parcels.length + 1}`;
-    await db.parcels.add({ id: Date.now(), gardenId: activeGarden.id, name, coordinates });
+    const garden = activeGardenRef.current;
+    if (!garden) return;
+    const currentParcels = parcelsRef.current;
+    const name = `Parcela ${currentParcels.length + 1}`;
+    await db.parcels.add({ id: Date.now(), gardenId: garden.id, name, coordinates });
   };
 
   const handleSelectParcel = async (parcel) => {
