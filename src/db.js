@@ -1253,55 +1253,6 @@ export async function checkRotationRules(parcelId, plantId, year) {
   };
 }
 
-export async function checkNeighborConflicts(targetParcelId, plantId, year, neighborParcelIds = []) {
-  if (!neighborParcelIds || neighborParcelIds.length === 0) return [];
-
-  const candidatePlant = await db.plants.get(plantId);
-  if (!candidatePlant) return [];
-
-  const activeNeighborPlantings = await db.plantings
-    .where('year')
-    .equals(year)
-    .filter(p => neighborParcelIds.includes(p.parcelId))
-    .toArray();
-
-  const warnings = [];
-
-  for (const planting of activeNeighborPlantings) {
-    const neighborPlant = await db.plants.get(planting.plantId);
-    if (!neighborPlant) continue;
-
-    const neighborParcel = await db.parcels.get(planting.parcelId);
-    const parcelName = neighborParcel ? neighborParcel.name : 'o parcelă vecină';
-
-    const candidateAvoids = (candidatePlant.avoid || '').toLowerCase();
-    const neighborAvoids = (neighborPlant.avoid || '').toLowerCase();
-    
-    const candidateName = candidatePlant.name.toLowerCase();
-    const neighborName = neighborPlant.name.toLowerCase();
-
-    const candidateBase = candidateName.split(' ')[0];
-    const neighborBase = neighborName.split(' ')[0];
-
-    const directConflict = candidateAvoids.includes(neighborName) || 
-                           (neighborBase.length > 3 && candidateAvoids.includes(neighborBase));
-                           
-    const reverseConflict = neighborAvoids.includes(candidateName) || 
-                            (candidateBase.length > 3 && neighborAvoids.includes(candidateBase));
-
-    if (directConflict || reverseConflict) {
-      warnings.push({
-        status: 'danger',
-        neighborParcelName: parcelName,
-        neighborPlantName: neighborPlant.name,
-        message: `Bă, nu e în regulă! Pe ${parcelName} ai ${neighborPlant.name}. ${candidatePlant.name} și ${neighborPlant.name} nu se înțeleg bine alături!`
-      });
-    }
-  }
-
-  return warnings;
-}
-
 // EXPORT DATE (Backup JSON)
 export async function exportDatabase() {
   const gardens = await db.gardens.toArray();
