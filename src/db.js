@@ -1217,11 +1217,13 @@ db.on('populate', async () => {
   await db.plants.bulkAdd(defaultPlants);
 });
 
-// Adaugă plantele implicite doar dacă baza de date e goală
+// Adaugă în tabela plants orice plantă din defaultPlants care încă nu există (după id);
+// nu atinge niciodată o plantă deja existentă, indiferent dacă a fost modificată de utilizator
 export async function ensureDefaultPlants() {
-  const count = await db.plants.count();
-  if (count === 0) {
-    await db.plants.bulkAdd(defaultPlants);
+  const existingIds = new Set(await db.plants.toCollection().primaryKeys());
+  const missing = defaultPlants.filter((p) => !existingIds.has(p.id));
+  if (missing.length > 0) {
+    await db.plants.bulkAdd(missing);
   }
 }
 
